@@ -67,7 +67,7 @@ Drop the `--highly_perturbing` command if you want to evaluate the performance u
 ### Run AutoPrompt tests
 
 We provide also the generated claims from triggers extracted by AutoPrompt inside `data/antonym/`. If you want to evaluate the ASR on these claims, you can skip this step, and run the command inside "Run the experiments".  
-Otherwise, by using AutoPrompt's python environment, run the following commands from the `autoprompt/` directory
+Otherwise, copy the `data/` directory into the `autoprompt/` directory. Then, by using AutoPrompt's python environment, run the following commands from the `autoprompt/` directory
 
 ```
 python3 -m autoprompt.create_trigger --model_name ../models/roberta-base/seed_1/scifact/scifact_model.pt --backbone roberta-base --train --max_sent_len 512 --dataset scifact --embed_size 768 --batch_size 32 --iters 5 --accumulation-steps 10
