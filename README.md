@@ -1,6 +1,8 @@
 # FactFlip
 
-![FACTFLIP pipeline](img/pipeline.png)
+<p align="center">
+  <img src="img/pipeline.png">
+</p>
 
 FactFlip is a framework for analyzing the robustness of claim verification systems through universal adversarial triggers.
 Unlike prior gradient-based approaches, FactFlip discovers perturbative trigger words using a lightweight, model-only logit analysis, without requiring access to training data or gradients, and integrates them into claims using an LLM-based perturb-and-verify pipeline that preserves semantic validity.
