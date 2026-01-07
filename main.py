@@ -12,7 +12,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from torch.optim import AdamW
 
-from data_processor import AVTCProcessor, FeverProcessor, FeverSymmetricProcessor, SciFactProcessor, VitamincProcessor, \
+from data_processor import AVTCProcessor, SciFactProcessor, VitamincProcessor, \
   dataset, collate_fn, collate_fn_antonym, FM2Processor, PolitiHopProcessor, HoverProcessor, AntonymsProcessor, OpenAIProcessor
 from model import RobertaModel, GenerativeModel
 from trainer import Trainer, AntonymTrainer
@@ -69,7 +69,7 @@ def get_data(config):
 
   elif config["dataset"] == "antonym":
     processor = AntonymsProcessor(config)
-    if "llama" in config["model_name"].lower() or "qwen" in config["model_name"].lower():
+    if "qwen" in config["model_name"].lower():
       num_classes = 3
     else:
       model_name = config["model_name"].split("/")[-1].split("_")[0]
@@ -313,6 +313,8 @@ def run():
               words = df["Word pair"].iloc[:50].values.tolist()
               for word in words:
                   processor, num_classes, path_train, path_dev, path_test = get_data(config)
+                  if "qwen" in config["model_name"].lower():
+                      word = word.split(":")[-1].strip()
 
                   if config["dataset"] == "scifact":
                       data_dev = processor.read_input_files(path_train, name="train", word=word, to_class=to_class, matches=match_idxs)
@@ -320,7 +322,7 @@ def run():
                   else:
                       data_dev = processor.read_input_files(path_dev, name="dev", word=word, to_class=to_class, matches=match_idxs)
 
-                  if "llama" in config["model_name"].lower() or "qwen" in config["model_name"].lower():
+                  if "qwen" in config["model_name"].lower(): #matching autoprompt's dev size
                       num_data = 10
                   else:
                       num_data = 320
@@ -360,13 +362,6 @@ def run():
     else:
       test_a, test_p, test_r, test_f1, predictions, labels = trainer.val(model, test_dataloader, return_preds=True)
 
-      count = 0
-      assert len(data_test) == len(predictions) == len(labels)
-      for test_sample, pred, lab in zip(data_test, predictions, labels):
-          if pred == lab:
-              print(test_sample)
-              count += 1
-      print(count / len(data_test))
       os.makedirs("/".join(path.split("/")[:-1]), exist_ok=True)
       with open(path, "wb") as f:
         pickle.dump(predictions, f)

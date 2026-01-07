@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SshConfigs">
+    <configs>
+      <sshConfig authType="PASSWORD" host="fg-s1.ing.unimo.it" id="91c3aad6-96a4-422f-b578-217081ec4b69" port="22" nameFormat="DESCRIPTIVE" username="n334698" useOpenSSHConfig="true" />
+    </configs>
+  </component>
+</project>

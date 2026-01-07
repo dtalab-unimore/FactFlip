@@ -9,19 +9,19 @@ import time
 load_dotenv()
 
 def remove_markdown_syntax(text: str) -> str:
-    # Remove triple backtick code blocks (```python ... ```)
+    # remove triple backtick code blocks (```python ... ```)
     text = re.sub(r"```[\s\S]*?```", lambda m: re.sub(r"^```.*\n|```$", '', m.group()), text)
 
-    # Remove inline code (`code`)
+    # remove inline code (`code`)
     text = re.sub(r"`([^`]*)`", r"\1", text)
 
-    # Remove bold (**text** or __text__)
+    # remove bold (**text** or __text__)
     text = re.sub(r"\*\*(.*?)\*\*", r"\1", text)
 
-    # Remove italic (*text* or _text_)
+    # remove italic (*text* or _text_)
     text = re.sub(r"\*(.*?)\*", r"\1", text)
 
-    # Remove blockquotes
+    # remove blockquotes
     text = re.sub(r"^>\s?", '', text, flags=re.MULTILINE)
 
     text = text.replace("python", "")
@@ -54,7 +54,7 @@ def extract_result(text: str, pattern: str) -> str:
 class OpenAIModel(BaseModel):
     model_name: str = Field("gpt-4o-mini", strict=True, description="Name of the openai model as per their official website")
     temperature: float = Field(.0000000000000000000001, strict=True, description="The temperature of the model in between 0 and 1")
-    top_p: float = Field(.0000000000000000000001, strict=True, description="The top_p of the model in between 0 and 1")
+    top_p: float = Field(1.0, strict=True, description="The top_p of the model in between 0 and 1")
     client: Any = None # OpenAI()
     max_retries: int = Field(50, strict=True, description="Number of retries in case of failed OpenAI API call")
 

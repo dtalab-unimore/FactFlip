@@ -16,7 +16,7 @@ import unicodedata
 import re
 
 def remove_accents(text):
-    # Remove all patterns like \uXXXX (where X is a hex digit)
+    # removing all patterns like \uXXXX (where X is a hex digit)
     return re.sub(r'\\u[0-9a-fA-F]{4}', '', text)
 
 
@@ -53,7 +53,6 @@ def collate_fn_antonym(examples):
     segs_sent1 = torch.tensor(segs_sent1, dtype=torch.long)
     att_mask_sent1 = torch.tensor(att_mask_sent1, dtype=torch.long)
     ids_sent2 = torch.tensor(ids_sent2, dtype=torch.long)
-    segs_sent2 = torch.tensor(segs_sent2, dtype=torch.long)
     segs_sent2 = torch.tensor(segs_sent2, dtype=torch.long)
     att_mask_sent2 = torch.tensor(att_mask_sent2, dtype=torch.long)
     if label is not None:
@@ -112,7 +111,7 @@ class DataProcessor:
   def _get_examples_causal_lm(self, claim, evidence):
     count_truncated_samples = 0
 
-    text += f"Claim: {claim}\nEvidence: {evidence.strip()}"
+    text = f"Claim: {claim}\nEvidence: {evidence.strip()}"
     prompt = self.prompt.format(input=text)
 
     ids_sent1 = self.tokenizer.encode(prompt)
@@ -138,7 +137,7 @@ class DataProcessor:
     count_truncated_samples = 0
 
     if self.tokenizer.pad_token is None:
-        # safe fallback for qwen
+        # safe fallback if the tokenizer does not have a pad token
         self.tokenizer.pad_token = self.tokenizer.eos_token
         self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
 
@@ -158,7 +157,7 @@ class DataProcessor:
           evidence_length = len(self.tokenizer.encode(evidence))
 
           ids_sent1 = self.tokenizer.encode(claim, evidence)
-          segs_sent1 = [0] * claim_length + [1] * (evidence_length)
+          segs_sent1 = [0] * claim_length + [1] * evidence_length
 
           assert len(ids_sent1) == len(segs_sent1)
 
@@ -176,8 +175,6 @@ class DataProcessor:
             count_truncated_samples += 1
       else:
         prompt_text, ids_sent1, segs_sent1, att_mask_sent1, truncated_count = self._get_examples_causal_lm(claim, evidence)
-        #if i == 0:
-        #    print(prompt_text)
         count_truncated_samples += truncated_count
 
       example = [claim, evidence, ids_sent1, segs_sent1, att_mask_sent1, label]
@@ -283,8 +280,7 @@ class AntonymsProcessor(DataProcessor):
 
             examples.append(example)
 
-        print(
-            f"finished preprocessing examples in {dataset_type}: {count_truncated_samples} samples truncated out of {len(dataset)}")
+        print(f"finished preprocessing examples in {dataset_type}: {count_truncated_samples} samples truncated out of {len(dataset)}")
 
         return examples
 

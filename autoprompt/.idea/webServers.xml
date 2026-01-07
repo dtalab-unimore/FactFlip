@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="86928e09-f2fc-4451-acad-6a795fc92eb7" name="fg-s1">
+        <fileTransfer rootFolder="/home/n334698/autoprompt" accessType="SFTP" host="fg-s1.ing.unimo.it" port="22" sshConfigId="91c3aad6-96a4-422f-b578-217081ec4b69" sshConfig="n334698@fg-s1.ing.unimo.it:22 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" isUseRsync="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

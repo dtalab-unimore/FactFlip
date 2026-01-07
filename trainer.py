@@ -41,7 +41,7 @@ class Trainer:
 
             out = model(ids_sent1, segs_sent1, att_mask_sent1)
             if isinstance(labels, list):
-                labels = torch.tensor(np.array(labels)) #.to(self.device)
+                labels = torch.tensor(np.array(labels)).to(self.device)
             loss = loss_fn(out, labels.float())
 
             tr_loss += loss.item()

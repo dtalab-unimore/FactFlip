@@ -10,11 +10,8 @@ from functools import lru_cache
 # support, refute, not enough info
 class_weights = {
     "avtc": [0.7, 0.39, 0.91],
-    "fever": [0.45, 0.8, 0.75],
-    "feversymmetric": [0.45, 0.8, 0.75],
     "scifact": [0.59, 0.79, 0.62],
     "vitaminc": [0.5, 0.64, 0.86],
-    "factcheckingstereoset": [1,1,1],
     "fm2": [0.51, 0.49],
     "politihop": [0.83, 0.17],
     "hover": [0.39, 0.61],
@@ -38,7 +35,6 @@ def get_config():
     parser.add_argument('--openai_path', type=str, required=False, help='path to openai generated claims')
     parser.add_argument('--highly_perturbing', action="store_true", help='select highly perturbing claims for openai')
     parser.add_argument('--test_only', action="store_true", help='Do not train')
-    #parser.add_argument('--return_sentences', action="store_true", help='Make the dataset processor return also textual claims and evidence')
     parser.add_argument('--potency', action="store_true", help='Extract "potency" words to flip model predictions')
     parser.add_argument('--stereotype', action="store_true", help='Extract "stereotype" words to flip model predictions')
     parser.add_argument('--extract_words_from_dev', type=str, required=False, default=None, help="Dev set for word extraction")
@@ -63,16 +59,15 @@ def get_config_adversarial():
     parser.add_argument('--max_sent_len', type=int, default=512, help='Maximum sentence length')
     parser.add_argument('--dataset', type=str, default='avtc', help='Dataset to test the concept vectors')
     parser.add_argument('--test_only', action="store_true", help='Do not train')
-    parser.add_argument('--no_compute_predictions', action="store_false", help='Compute model predictions on original claims')
+    parser.add_argument('--no_compute_predictions', action="store_false", help='Don\'t compute model predictions on original claims')
     parser.add_argument('--use_similarity', action="store_true", help='Extract words based on similarity to claims')
     parser.add_argument('--use_dev_tuning', action="store_true", help='Extract words by first performing dev set tuning')
     parser.add_argument('--num_words', type=int, default=1, help='Number of adversarial words to add')
     parser.add_argument('--stereotype', action="store_true", help='Extract "stereotype" words to flip model predictions')
     parser.add_argument('--not_from_template', action="store_false", help='Create new claims with openai')
+    parser.add_argument('--list_of_words', type=list, default=[], help='List of adversarial words to use to generate the claims')
 
     args = vars(parser.parse_args())
-
-    arg_check(args)
 
     if "class_weight" not in args.keys():
         args["class_weight"] = class_weights[args["dataset"]]
@@ -86,10 +81,10 @@ def get_config_adversarial():
 
 @lru_cache()
 def get_device():
-    #device = torch.device("cpu")
-    if torch.cuda.is_available(): # TODO: remove comment
-        print("Training on GPU") # TODO: remove comment
-        device = torch.device("cuda:0") # TODO: remove comment
+    device = torch.device("cpu")
+    if torch.cuda.is_available():
+        print("Training on GPU")
+        device = torch.device("cuda:0")
 
     return device
 

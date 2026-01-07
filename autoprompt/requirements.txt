@@ -1,0 +1,12 @@
+streamlit
+tqdm
+pandas
+numpy
+torch
+transformers
+spacy
+termcolor
+colorama
+matplotlib
+pytest
+scikit-learn==1.7.1

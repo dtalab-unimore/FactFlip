@@ -3,7 +3,6 @@ import torch
 from transformers import AutoModel, AutoModelForCausalLM
 from torch import nn
 import torch.nn.functional as F
-from utils import get_device
 
 class CustomModel(nn.Module):
   def __init__(self):
@@ -21,14 +20,14 @@ class CustomModel(nn.Module):
     value /= len(embs)
     return value
 
-class GenerativeModel(CustomModel):
+class LlamaModel(CustomModel):
   def __init__(self, config):
-    super(GenerativeModel, self).__init__()
+    super(LlamaModel, self).__init__()
 
     self.num_classes = config["num_classes"]
     self.embed_size = config["embed_size"]
 
-    # using Qwen
+    # Use LLaMA (decoder-only)
     self.plm = AutoModelForCausalLM.from_pretrained(
       config["model_name"],
       output_hidden_states=True,
@@ -39,7 +38,7 @@ class GenerativeModel(CustomModel):
   #@torch.autocast(device_type="cuda")
   def forward(self, ids_sent1, segs_sent1, att_mask_sent1):
     """
-    Return full logits from Qwen’s lm_head.
+    Return full logits from LLaMA’s lm_head.
     ids_sent1: [batch, seq_len]
     att_mask_sent1: [batch, seq_len]
     """
@@ -48,14 +47,15 @@ class GenerativeModel(CustomModel):
       attention_mask=att_mask_sent1,
     )
 
-    logits = outputs.logits[torch.arange(len(outputs.logits), device=outputs.logits.device), -1, :]
+    #last_token_idx = att_mask_sent1.sum(dim=1) - 1
+    logits = outputs.logits[torch.arange(len(outputs.logits), device=outputs.logits.device), -1, :] #last_token_idx, :]
 
     # outputs.logits → [batch_size, seq_len, vocab_size]
     return logits
 
   @torch.autocast(device_type="cuda")
   def compute_concept_vector(self, ids_sent1, segs_sent1, att_mask_sent1, ids_sent2, segs_sent2, att_mask_sent2):
-    # forward pass
+    # Forward pass
     out_concept = self.plm(
       input_ids=ids_sent1,
       attention_mask=att_mask_sent1,
@@ -68,15 +68,23 @@ class GenerativeModel(CustomModel):
       output_hidden_states=True
     ).hidden_states[-1]  # shape: [batch, seq_len, hidden_size]
 
-    out_concept = self.compute_average_layers(out_concept) # with only one layer, this is redundant
-    out_random = self.compute_average_layers(out_random) # with only one layer, this is redundant
+    # Average across layers if needed (you can also skip if using last_hidden_state only)
+    out_concept = self.compute_average_layers(out_concept)
+    out_random = self.compute_average_layers(out_random)
 
     batch_size = out_concept.size(0)
     batch_idx = torch.arange(batch_size, device=out_concept.device)
+    #last_token_idx_concept = att_mask_sent1.sum(dim=1) - 1
+    #last_token_idx_random = att_mask_sent2.sum(dim=1) - 1
 
-    out_concept = out_concept[batch_idx, -1, :]
-    out_random = out_random[batch_idx, -1, :]
+    out_concept = out_concept[batch_idx, -1, :] #last_token_idx_concept, :]
+    out_random = out_random[batch_idx, -1, :] #last_token_idx_random, :]
 
+    """# Compute concept vector (optional: pooling to single vector)
+    concept_vector = (out_concept * att_mask_sent1.unsqueeze(-1)).sum(1) / att_mask_sent1.sum(1, keepdim=True) \
+                     - (out_random * att_mask_sent2.unsqueeze(-1)).sum(1) / att_mask_sent2.sum(1, keepdim=True)"""
+
+    # Return the last hidden states (sequence embeddings) before lm_head
     return None, out_concept, out_random
 
 class RobertaModel(CustomModel):
@@ -87,16 +95,16 @@ class RobertaModel(CustomModel):
     self.embed_size = config["embed_size"]
 
     if config["backbone"] is not None:
-      self.plm = AutoModel.from_pretrained(config["backbone"]).to(get_device())
+      self.plm = AutoModel.from_pretrained(config["backbone"])
     else:
-      self.plm = AutoModel.from_pretrained(config["model_name"]).to(get_device())
+      self.plm = AutoModel.from_pretrained(config["model_name"])
 
     config = self.plm.config
     config.type_vocab_size = 2
     self.plm.embeddings.token_type_embeddings = nn.Embedding(
       config.type_vocab_size, config.hidden_size
     )
-    self.plm._init_weights(self.plm.embeddings.token_type_embeddings) # re-initialize token_type_embeddings to possibly accept more than 2 segment ids
+    self.plm._init_weights(self.plm.embeddings.token_type_embeddings)
     self.linear_layer = torch.nn.Linear(in_features=self.embed_size, out_features=self.num_classes)
     self._init_weights(self.linear_layer)
 
@@ -139,4 +147,22 @@ class RobertaModel(CustomModel):
     out_random = out_random[:,0,:]
 
     concept_vector = out_concept - out_random
-    return concept_vector, out_concept, out_random
+    # concept_vector = torch.mean(concept_vector, dim=0)
+    return concept_vector, out_concept, out_random #F.normalize(concept_vector, p=2, dim=1), F.normalize((out_concept+out_random) / 2, p=2, dim=1)
+
+  @torch.autocast(device_type="cuda")
+  def forward_without_classifier(self, ids_sent1, segs_sent1, att_mask_sent1, norm=True):
+    out_emb = self.plm(
+      ids_sent1,
+      token_type_ids=segs_sent1,
+      attention_mask=att_mask_sent1,
+      output_hidden_states=True
+    )
+    out_emb = out_emb.hidden_states[-1]
+    out_emb = self.compute_average_layers(out_emb)
+    out_emb = out_emb[:,0,:]
+
+    if norm:
+      return F.normalize(out_emb, p=2, dim=1)
+    else:
+      return out_emb
