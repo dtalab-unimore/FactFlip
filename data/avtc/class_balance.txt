@@ -1,0 +1,1 @@
+{'Supported': 849, 'Refuted': 1742, 'Conflicting Evidence/Cherrypicking': 195, 'Not Enough Evidence': 282}
