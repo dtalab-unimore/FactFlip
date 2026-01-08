@@ -5,7 +5,10 @@
 </p>
 
 FactFlip is a framework for analyzing the robustness of claim verification systems through universal adversarial triggers.
-Unlike prior gradient-based approaches, FactFlip discovers perturbative trigger words using a lightweight, model-only logit analysis, without requiring access to training data or gradients, and integrates them into claims using an LLM-based perturb-and-verify pipeline that preserves semantic validity.
+Unlike prior gradient-based approaches, FactFlip discovers perturbative trigger words using a lightweight, model-only logit analysis, without requiring access to training data or gradients, and integrates them into claims using an LLM-based perturb-and-verify pipeline that preserves semantic validity.  
+
+We provide an example jupyter notebook `factflip.ipynb` illustrating how to use FactFlip on the FM2 dataset.  
+For the more general tests in the paper, please follow the instructions below.
 
 ## How to reproduce the results
 
